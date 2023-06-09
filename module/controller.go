@@ -33,6 +33,24 @@ func InsertOneDoc(db *mongo.Database, collection string, doc interface{}) (inser
 }
 
 // Insert Function
+func InsertPasien(db *mongo.Database, col string, nama_pasien string, nomor_ktp string, alamat string, nomor_telepon string, tanggal_lahir string, jenis_kelamin string) (insertedID primitive.ObjectID, err error) {
+	pasien := bson.M{
+		"nama_pasien":   nama_pasien,
+		"nomor_ktp":     nomor_ktp,
+		"alamat":        alamat,
+		"nomor_telepon": nomor_telepon,
+		"tanggal_lahir": tanggal_lahir,
+		"jenis_kelamin": jenis_kelamin,
+	}
+	result, err := db.Collection(col).InsertOne(context.Background(), pasien)
+	if err != nil {
+		fmt.Printf("InsertPasien: %v\n", err)
+		return
+	}
+	insertedID = result.InsertedID.(primitive.ObjectID)
+	return insertedID, nil
+}
+
 func InsertAntrian(db *mongo.Database, col string, poli model.Poliklinik, identitas_pasien model.Pasien, nomor_antrian int, status_antrian string) (insertedID primitive.ObjectID, err error) {
 	antrian := bson.M{
 		"poli":                poli,
@@ -80,6 +98,19 @@ func InsertDokter(db *mongo.Database, col string, nama_dokter string, spesialisa
 }
 
 // Get Function
+func GetPasienFromID(_id primitive.ObjectID, db *mongo.Database, col string) (data model.Pasien, errs error) {
+	pasien := db.Collection(col)
+	filter := bson.M{"_id": _id}
+	err := pasien.FindOne(context.TODO(), filter).Decode(&data)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return data, fmt.Errorf("no data found for ID %s", _id)
+		}
+		return data, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
+	}
+	return data, nil
+}
+
 func GetAntrianFromID(_id primitive.ObjectID, db *mongo.Database, col string) (data model.Antrian, errs error) {
 	antrian := db.Collection(col)
 	filter := bson.M{"_id": _id}
@@ -120,6 +151,20 @@ func GetDokterFromID(_id primitive.ObjectID, db *mongo.Database, col string) (da
 }
 
 // Get All Function
+func GetAllPasien(db *mongo.Database, col string) (data []model.Pasien) {
+	pasien := db.Collection(col)
+	filter := bson.M{}
+	cursor, err := pasien.Find(context.TODO(), filter)
+	if err != nil {
+		fmt.Println("GetAllPasien :", err)
+	}
+	err = cursor.All(context.TODO(), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return
+}
+
 func GetAllAntrian(db *mongo.Database, col string) (data []model.Antrian) {
 	antrian := db.Collection(col)
 	filter := bson.M{}
@@ -163,6 +208,30 @@ func GetAllDokter(db *mongo.Database, col string) (data []model.Dokter) {
 }
 
 // Update Function
+
+func UpdatePasien(db *mongo.Database, col string, id primitive.ObjectID, nama_pasien string, nomor_ktp string, alamat string, nomor_telepon string, tanggal_lahir string, jenis_kelamin string) (err error) {
+	filter := bson.M{"_id": id}
+	update := bson.M{
+		"$set": bson.M{
+			"nama_pasien":   nama_pasien,
+			"nomor_ktp":     nomor_ktp,
+			"alamat":        alamat,
+			"nomor_telepon": nomor_telepon,
+			"tanggal_lahir": tanggal_lahir,
+			"jenis_kelamin": jenis_kelamin,
+		},
+	}
+	result, err := db.Collection(col).UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("UpdatePasien: %v\n", err)
+		return
+	}
+	if result.ModifiedCount == 0 {
+		err = errors.New("No data has been changed with the specified ID")
+		return
+	}
+	return nil
+}
 
 func UpdateAntrian(db *mongo.Database, col string, id primitive.ObjectID, poli model.Poliklinik, identitas_pasien model.Pasien, nomor_antrian int, status_antrian string) (err error) {
 	filter := bson.M{"_id": id}

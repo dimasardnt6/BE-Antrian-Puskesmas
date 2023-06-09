@@ -33,13 +33,5 @@ type Poliklinik struct {
 type Dokter struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 	Nama_Dokter  string             `bson:"nama_dokter,omitempty" json:"nama_dokter,omitempty"`
-	Spesialisasi string             `bson:"total_spesialisasi,omitempty" json:"spesialisasi,omitempty"`
-}
-type Jadwal_Dokter struct {
-	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Identitas_Dokter Dokter             `bson:"identitas_dokter,omitempty" json:"identitas_dokter,omitempty"`
-	Jenis_Poliklinik Poliklinik         `bson:"jenis_poliklinik,omitempty" json:"jenis_poliklinik,omitempty"`
-	Hari_Kerja       []string           `bson:"hari_kerja,omitempty" json:"hari_kerja,omitempty"`
-	Jam_Mulai        string             `bson:"jam_mulai,omitempty" json:"jam_mulai,omitempty"`
-	Jam_Selesai      string             `bson:"jam_selesai,omitempty" json:"jam_selesai,omitempty"`
+	Spesialisasi string             `bson:"spesialisasi,omitempty" json:"spesialisasi,omitempty"`
 }

@@ -10,6 +10,20 @@ import (
 )
 
 // Test Insert
+func TestInsertPasien(t *testing.T) {
+	nama_pasien := "Dimas Ardianto"
+	nomor_ktp := "3217060601020007"
+	alamat := "Bandung Barat"
+	nomor_telepon := "089647129890"
+	tanggal_lahir := "6 Januari 2002"
+	jenis_kelamin := "Laki-Laki"
+	insertedID, err := module.InsertPasien(module.MongoConn, "data_pasien", nama_pasien, nomor_ktp, alamat, nomor_telepon, tanggal_lahir, jenis_kelamin)
+	if err != nil {
+		t.Errorf("Error inserting data: %v", err)
+	}
+	fmt.Printf("Data berhasil disimpan dengan id %s", insertedID.Hex())
+}
+
 func TestInsertAntrian(t *testing.T) {
 	poli := model.Poliklinik{
 		Kode_Poliklinik: "PLUM",
@@ -55,6 +69,19 @@ func TestInsertDokter(t *testing.T) {
 }
 
 // Test Get
+func TestGetPasienFromID(t *testing.T) {
+	id := "6482eaab8de5676bccccab77"
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		t.Fatalf("error converting id to ObjectID: %v", err)
+	}
+	biodata, err := module.GetPasienFromID(objectID, module.MongoConn, "data_pasien")
+	if err != nil {
+		t.Fatalf("error calling GetPasienFromID: %v", err)
+	}
+	fmt.Println(biodata)
+}
+
 func TestGetAntrianFromID(t *testing.T) {
 	id := "6482d2e36957c6996b458aa8"
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -93,8 +120,23 @@ func TestGetDokterFromID(t *testing.T) {
 	fmt.Println(dokter)
 }
 
+func TestGetAllPasien(t *testing.T) {
+	data := module.GetAllPasien(module.MongoConn, "data_pasien")
+	fmt.Println(data)
+}
+
 func TestGetAllAntrian(t *testing.T) {
 	data := module.GetAllAntrian(module.MongoConn, "data_antrian")
+	fmt.Println(data)
+}
+
+func TestGetAllPoliklinik(t *testing.T) {
+	data := module.GetAllPoliklinik(module.MongoConn, "data_poliklinik")
+	fmt.Println(data)
+}
+
+func TestGetAllDokter(t *testing.T) {
+	data := module.GetAllDokter(module.MongoConn, "data_dokter")
 	fmt.Println(data)
 }
 
