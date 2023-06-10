@@ -83,10 +83,11 @@ func InsertPoliklinik(db *mongo.Database, col string, kode_poliklinik string, na
 	return insertedID, nil
 }
 
-func InsertDokter(db *mongo.Database, col string, nama_dokter string, spesialisasi string) (insertedID primitive.ObjectID, err error) {
+func InsertDokter(db *mongo.Database, col string, nama_dokter string, spesialisasi string, poli model.Poliklinik) (insertedID primitive.ObjectID, err error) {
 	dokter := bson.M{
 		"nama_dokter":  nama_dokter,
 		"spesialisasi": spesialisasi,
+		"poli":         poli,
 	}
 	result, err := db.Collection(col).InsertOne(context.Background(), dokter)
 	if err != nil {
@@ -277,12 +278,13 @@ func UpdatePoliklinik(db *mongo.Database, col string, id primitive.ObjectID, kod
 	return nil
 }
 
-func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_dokter string, spesialisasi string) (err error) {
+func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_dokter string, spesialisasi string, poli model.Poliklinik) (err error) {
 	filter := bson.M{"_id": id}
 	update := bson.M{
 		"$set": bson.M{
 			"nama_dokter":  nama_dokter,
 			"spesialisasi": spesialisasi,
+			"poli":         poli,
 		},
 	}
 	result, err := db.Collection(col).UpdateOne(context.Background(), filter, update)
@@ -298,6 +300,22 @@ func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_do
 }
 
 // Delete Function
+
+func DeletePasienByID(_id primitive.ObjectID, db *mongo.Database, col string) error {
+	pasien := db.Collection(col)
+	filter := bson.M{"_id": _id}
+
+	result, err := pasien.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return fmt.Errorf("error deleting data for ID %s: %s", _id, err.Error())
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("data with ID %s not found", _id)
+	}
+
+	return nil
+}
 
 func DeleteAntrianByID(_id primitive.ObjectID, db *mongo.Database, col string) error {
 	antrian := db.Collection(col)
@@ -320,6 +338,22 @@ func DeletePoliklinikByID(_id primitive.ObjectID, db *mongo.Database, col string
 	filter := bson.M{"_id": _id}
 
 	result, err := poliklinik.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return fmt.Errorf("error deleting data for ID %s: %s", _id, err.Error())
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("data with ID %s not found", _id)
+	}
+
+	return nil
+}
+
+func DeleteDokterByID(_id primitive.ObjectID, db *mongo.Database, col string) error {
+	dokter := db.Collection(col)
+	filter := bson.M{"_id": _id}
+
+	result, err := dokter.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return fmt.Errorf("error deleting data for ID %s: %s", _id, err.Error())
 	}

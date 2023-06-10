@@ -34,4 +34,5 @@ type Dokter struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 	Nama_Dokter  string             `bson:"nama_dokter,omitempty" json:"nama_dokter,omitempty"`
 	Spesialisasi string             `bson:"spesialisasi,omitempty" json:"spesialisasi,omitempty"`
+	Poli         Poliklinik         `bson:"poli,omitempty" json:"poli,omitempty"`
 }

@@ -59,9 +59,13 @@ func TestInsertPoliklinik(t *testing.T) {
 }
 
 func TestInsertDokter(t *testing.T) {
-	nama_dokter := "Dr.Johnson"
-	spesialisasi := "Dokter Sepesialis Anak"
-	insertedID, err := module.InsertDokter(module.MongoConn, "data_dokter", nama_dokter, spesialisasi)
+	nama_dokter := "Dr.Stewards"
+	spesialisasi := "Dokter Sepesialis Gigi"
+	poli := model.Poliklinik{
+		Kode_Poliklinik: "PLGI",
+		Nama_Poliklinik: "Poliklinik Gigi",
+	}
+	insertedID, err := module.InsertDokter(module.MongoConn, "data_dokter", nama_dokter, spesialisasi, poli)
 	if err != nil {
 		t.Errorf("Error inserting data: %v", err)
 	}
