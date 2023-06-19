@@ -31,16 +31,15 @@ func TestInsertAntrian(t *testing.T) {
 		Deskripsi:       "memberikan pelayanan kedokteran berupa pemeriksaan kesehatan, pengobatan dan penyuluhan kepada pasien atau masyarakat",
 	}
 	identitas_pasien := model.Pasien{
-		Nama_Pasien:   "Dimas Ardianto",
+		Nama_Pasien:   "dito",
 		Nomor_Ktp:     "3217060601020007",
 		Alamat:        "Bandung Barat",
 		Nomor_Telepon: "089647129890",
 		Tanggal_Lahir: "06 Januari 2002",
 		Jenis_Kelamin: "Laki-Laki",
 	}
-	nomor_antrian := 1
 	status_antrian := "Menunggu"
-	insertedID, err := module.InsertAntrian(module.MongoConn, "data_antrian", poli, identitas_pasien, nomor_antrian, status_antrian)
+	insertedID, err := module.InsertAntrian(module.MongoConn, "data_antrian", poli, identitas_pasien, status_antrian)
 	if err != nil {
 		t.Errorf("Error inserting data: %v", err)
 	}
@@ -87,7 +86,7 @@ func TestGetPasienFromID(t *testing.T) {
 }
 
 func TestGetAntrianFromID(t *testing.T) {
-	id := "6482d2e36957c6996b458aa8"
+	id := "649043f3a847772b3b8bc1a1"
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		t.Fatalf("error converting id to ObjectID: %v", err)

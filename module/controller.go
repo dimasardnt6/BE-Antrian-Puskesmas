@@ -2,17 +2,23 @@ package module
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/badoux/checkmail"
 	"github.com/dimasardnt6/BE-Antrian-Puskesmas/model"
+	"golang.org/x/crypto/argon2"
 
 	"github.com/aiteung/atdb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var MongoString string = os.Getenv("MONGOSTRING")
@@ -30,6 +36,88 @@ func InsertOneDoc(db *mongo.Database, collection string, doc interface{}) (inser
 		fmt.Printf("InsertOneDoc: %v\n", err)
 	}
 	return insertResult.InsertedID
+}
+
+func InsertOneDoc2(db *mongo.Database, col string, doc interface{}) (insertedID primitive.ObjectID, err error) {
+	result, err := db.Collection(col).InsertOne(context.Background(), doc)
+	if err != nil {
+		// fmt.Printf("InsertOneDoc: %v\n", err)
+		return insertedID, fmt.Errorf("kesalahan server")
+	}
+	insertedID = result.InsertedID.(primitive.ObjectID)
+	return insertedID, nil
+}
+
+// Login Function
+
+func GetUserFromEmail(email string, db *mongo.Database, col string) (result model.Pasien, err error) {
+	collection := db.Collection(col)
+	filter := bson.M{"email": email}
+	err = collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return result, fmt.Errorf("email tidak ditemukan")
+		}
+		return result, fmt.Errorf("kesalahan server")
+	}
+	return result, nil
+}
+
+func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedID primitive.ObjectID, err error) {
+	if insertedDoc.Nama_Pasien == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
+		return insertedID, fmt.Errorf("Data harus lengkap")
+	}
+	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
+		return insertedID, fmt.Errorf("Email tidak valid")
+	}
+	userExists, _ := GetUserFromEmail(insertedDoc.Email, db, col)
+	if insertedDoc.Email == userExists.Email {
+		return insertedID, fmt.Errorf("Email sudah terdaftar")
+	}
+	if insertedDoc.Confirmpassword != insertedDoc.Password {
+		return insertedID, fmt.Errorf("Konfirmasi password salah")
+	}
+	if strings.Contains(insertedDoc.Password, " ") {
+		return insertedID, fmt.Errorf("Password tidak boleh mengandung spasi")
+	}
+	if len(insertedDoc.Password) < 8 {
+		return insertedID, fmt.Errorf("Password harus lebih dari 7 digit")
+	}
+	salt := make([]byte, 16)
+	_, err = rand.Read(salt)
+	if err != nil {
+		return insertedID, fmt.Errorf("kesalahan server")
+	}
+	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+	insertedDoc.Password = hex.EncodeToString(hashedPassword)
+	insertedDoc.Salt = hex.EncodeToString(salt)
+	insertedDoc.Confirmpassword = ""
+	return InsertOneDoc2(db, col, insertedDoc)
+}
+
+func LogIn(db *mongo.Database, col string, insertedDoc model.Pasien) (nama_pasien string, err error) {
+	if insertedDoc.Email == "" || insertedDoc.Password == "" {
+		return nama_pasien, fmt.Errorf("Data harus lengkap")
+	}
+	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
+		return nama_pasien, fmt.Errorf("Email tidak valid")
+	}
+	existsDoc, err := GetUserFromEmail(insertedDoc.Email, db, col)
+	if err != nil {
+		return
+	}
+	salt, err := hex.DecodeString(existsDoc.Salt)
+	if err != nil {
+		return nama_pasien, fmt.Errorf("kesalahan server")
+	}
+	hash := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+	if hex.EncodeToString(hash) != existsDoc.Password {
+		// fmt.Println("insert :", hex.EncodeToString(hash))
+		// fmt.Println("exist :", existsDoc.Password)
+		// fmt.Println("salt :", salt)
+		return nama_pasien, fmt.Errorf("Password salah")
+	}
+	return existsDoc.Nama_Pasien, nil
 }
 
 // Insert Function
@@ -51,11 +139,12 @@ func InsertPasien(db *mongo.Database, col string, nama_pasien string, nomor_ktp 
 	return insertedID, nil
 }
 
-func InsertAntrian(db *mongo.Database, col string, poli model.Poliklinik, identitas_pasien model.Pasien, nomor_antrian int, status_antrian string) (insertedID primitive.ObjectID, err error) {
+func InsertAntrian(db *mongo.Database, col string, poli model.Poliklinik, identitas_pasien model.Pasien, status_antrian string) (insertedID primitive.ObjectID, err error) {
+	nomor_antrian, _ := GetAntrianTerakhir(db)
 	antrian := bson.M{
 		"poli":                poli,
 		"identitas_pasien":    identitas_pasien,
-		"nomor_antrian":       nomor_antrian,
+		"nomor_antrian":       nomor_antrian + 1,
 		"tanggal_pendaftaran": primitive.NewDateTimeFromTime(time.Now().UTC()),
 		"status_antrian":      status_antrian,
 	}
@@ -123,6 +212,21 @@ func GetAntrianFromID(_id primitive.ObjectID, db *mongo.Database, col string) (d
 		return data, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
 	}
 	return data, nil
+}
+
+func GetAntrianTerakhir(db *mongo.Database) (int, error) {
+	var data model.Antrian
+	antrian := db.Collection("data_antrian")
+	filter := bson.D{{}}
+	opts := options.FindOne().SetSort(bson.D{{Key: "_id", Value: -1}})
+	err := antrian.FindOne(context.TODO(), filter, opts).Decode(&data)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return data.Nomor_Antrian, fmt.Errorf("no data found for ID %s", data.ID)
+		}
+		return data.Nomor_Antrian, fmt.Errorf("error retrieving data for ID %s: %s", data.ID, err.Error())
+	}
+	return data.Nomor_Antrian, nil
 }
 
 func GetPoliklinikFromID(_id primitive.ObjectID, db *mongo.Database, col string) (data model.Poliklinik, errs error) {
