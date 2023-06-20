@@ -4,18 +4,24 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Pasien struct {
+type User struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Nama_Pasien     string             `bson:"nama_pasien,omitempty" json:"nama_pasien,omitempty"`
-	Nomor_Ktp       string             `bson:"nomor_ktp,omitempty" json:"nomor_ktp,omitempty"`
-	Alamat          string             `bson:"alamat,omitempty" json:"alamat,omitempty"`
-	Nomor_Telepon   string             `bson:"nomor_telepon,omitempty" json:"nomor_telepon,omitempty"`
-	Tanggal_Lahir   string             `bson:"tanggal_lahir,omitempty" json:"tanggal_lahir,omitempty"`
-	Jenis_Kelamin   string             `bson:"jenis_kelamin,omitempty" json:"jenis_kelamin,omitempty"`
+	FirstName       string             `bson:"firstname,omitempty" json:"firstname,omitempty"`
+	LastName        string             `bson:"lastname,omitempty" json:"lastname,omitempty"`
 	Email           string             `bson:"email,omitempty" json:"email,omitempty"`
 	Password        string             `bson:"password,omitempty" json:"password,omitempty"`
 	Confirmpassword string             `bson:"confirmpass,omitempty" json:"confirmpass,omitempty"`
 	Salt            string             `bson:"salt,omitempty" json:"salt,omitempty"`
+}
+
+type Pasien struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Nama_Pasien   string             `bson:"nama_pasien,omitempty" json:"nama_pasien,omitempty"`
+	Nomor_Ktp     string             `bson:"nomor_ktp,omitempty" json:"nomor_ktp,omitempty"`
+	Alamat        string             `bson:"alamat,omitempty" json:"alamat,omitempty"`
+	Nomor_Telepon string             `bson:"nomor_telepon,omitempty" json:"nomor_telepon,omitempty"`
+	Tanggal_Lahir string             `bson:"tanggal_lahir,omitempty" json:"tanggal_lahir,omitempty"`
+	Jenis_Kelamin string             `bson:"jenis_kelamin,omitempty" json:"jenis_kelamin,omitempty"`
 }
 
 type Antrian struct {

@@ -9,22 +9,49 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func TestInsertUser(t *testing.T) {
+	var doc model.User
+	doc.FirstName = "Dimas"
+	doc.LastName = "Ardianto"
+	doc.Email = "dimas@gmail.com"
+	doc.Password = "qwertyuiop"
+	if doc.FirstName == "" || doc.LastName == "" || doc.Email == "" || doc.Password == "" {
+		t.Errorf("Data tidak boleh kosong")
+	} else {
+		insertedID, err := module.InsertUser(module.MongoConn, "data_user", doc)
+		if err != nil {
+			t.Errorf("Error inserting document: %v", err)
+			fmt.Println("Data tidak berhasil disimpan")
+		} else {
+			fmt.Println("Data berhasil disimpan dengan id :", insertedID.Hex())
+		}
+	}
+}
+
 func TestSignUp(t *testing.T) {
-	var doc model.Pasien
-	doc.Nama_Pasien = "Dimas Ardianto"
-	doc.Nomor_Ktp = "3217060601020007"
-	doc.Alamat = "Bandung Barat"
-	doc.Nomor_Telepon = "089647129890"
-	doc.Tanggal_Lahir = "6 Januari 2002"
-	doc.Jenis_Kelamin = "Laki-Laki"
-	doc.Email = "dimas123@gmail.com"
+	var doc model.User
+	doc.FirstName = "Dimas"
+	doc.LastName = "Ardianto"
+	doc.Email = "dimas@gmail.com"
 	doc.Password = "qwertyuiop"
 	doc.Confirmpassword = "qwertyuiop"
-	insertedID, err := module.SignUp(module.MongoConn, "data_pasien", doc)
+	insertedID, err := module.SignUp(module.MongoConn, "data_user", doc)
 	if err != nil {
 		t.Errorf("Error inserting document: %v", err)
 	} else {
-		fmt.Println("Data berhasil disimpan dengan id :", insertedID)
+		fmt.Println("Data berhasil disimpan dengan id :", insertedID.Hex())
+	}
+}
+
+func TestLogIn(t *testing.T) {
+	var doc model.User
+	doc.Email = "dimas@gmail.com"
+	doc.Password = "qwertyuiop"
+	user, err := module.LogIn(module.MongoConn, "data_user", doc)
+	if err != nil {
+		t.Errorf("Error getting document: %v", err)
+	} else {
+		fmt.Println("Welcome :", user)
 	}
 }
 

@@ -38,19 +38,19 @@ func InsertOneDoc(db *mongo.Database, collection string, doc interface{}) (inser
 	return insertResult.InsertedID
 }
 
-// func InsertOneDoc2(db *mongo.Database, col string, doc interface{}) (insertedID primitive.ObjectID, err error) {
-// 	result, err := db.Collection(col).InsertOne(context.Background(), doc)
-// 	if err != nil {
-// 		// fmt.Printf("InsertOneDoc: %v\n", err)
-// 		return insertedID, fmt.Errorf("kesalahan server")
-// 	}
-// 	insertedID = result.InsertedID.(primitive.ObjectID)
-// 	return insertedID, nil
-// }
+func InsertUser(db *mongo.Database, col string, doc interface{}) (insertedID primitive.ObjectID, err error) {
+	result, err := db.Collection(col).InsertOne(context.Background(), doc)
+	if err != nil {
+		// fmt.Printf("InsertOneDoc: %v\n", err)
+		return insertedID, fmt.Errorf("kesalahan server")
+	}
+	insertedID = result.InsertedID.(primitive.ObjectID)
+	return insertedID, nil
+}
 
 // Login Function
 
-func GetUserFromEmail(email string, db *mongo.Database, col string) (result model.Pasien, err error) {
+func GetUserFromEmail(email string, db *mongo.Database, col string) (result model.User, err error) {
 	collection := db.Collection(col)
 	filter := bson.M{"email": email}
 	err = collection.FindOne(context.TODO(), filter).Decode(&result)
@@ -63,25 +63,39 @@ func GetUserFromEmail(email string, db *mongo.Database, col string) (result mode
 	return result, nil
 }
 
-func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedID interface{}, err error) {
-	if insertedDoc.Nama_Pasien == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
-		return insertedID, fmt.Errorf("Data harus lengkap")
+func GetAllDocs(db *mongo.Database, col string, docs interface{}) interface{} {
+	collection := db.Collection(col)
+	filter := bson.M{}
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		fmt.Println("Error GetAllDocs in colecction", col, ":", err)
+	}
+	err = cursor.All(context.TODO(), &docs)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return docs
+}
+
+func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID primitive.ObjectID, err error) {
+	if insertedDoc.FirstName == "" || insertedDoc.LastName == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
+		return insertedID, fmt.Errorf("Data tidak boleh kosong")
 	}
 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
-		return insertedID, fmt.Errorf("Email tidak valid")
+		return insertedID, fmt.Errorf("email tidak valid")
 	}
 	userExists, _ := GetUserFromEmail(insertedDoc.Email, db, col)
 	if insertedDoc.Email == userExists.Email {
-		return insertedID, fmt.Errorf("Email sudah terdaftar")
+		return insertedID, fmt.Errorf("email sudah terdaftar")
 	}
 	if insertedDoc.Confirmpassword != insertedDoc.Password {
-		return insertedID, fmt.Errorf("Konfirmasi password salah")
+		return insertedID, fmt.Errorf("konfirmasi password salah")
 	}
 	if strings.Contains(insertedDoc.Password, " ") {
-		return insertedID, fmt.Errorf("Password tidak boleh mengandung spasi")
+		return insertedID, fmt.Errorf("password tidak boleh mengandung spasi")
 	}
 	if len(insertedDoc.Password) < 8 {
-		return insertedID, fmt.Errorf("Password harus lebih dari 7 digit")
+		return insertedID, fmt.Errorf("password terlalu pendek")
 	}
 	salt := make([]byte, 16)
 	_, err = rand.Read(salt)
@@ -92,15 +106,15 @@ func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedI
 	insertedDoc.Password = hex.EncodeToString(hashedPassword)
 	insertedDoc.Salt = hex.EncodeToString(salt)
 	insertedDoc.Confirmpassword = ""
-	return InsertOneDoc(db, col, insertedDoc), nil
+	return InsertUser(db, col, insertedDoc)
 }
 
-func LogIn(db *mongo.Database, col string, insertedDoc model.Pasien) (nama_pasien string, err error) {
+func LogIn(db *mongo.Database, col string, insertedDoc model.User) (userName string, err error) {
 	if insertedDoc.Email == "" || insertedDoc.Password == "" {
-		return nama_pasien, fmt.Errorf("Data harus lengkap")
+		return userName, fmt.Errorf("mohon untuk melengkapi data")
 	}
 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
-		return nama_pasien, fmt.Errorf("Email tidak valid")
+		return userName, fmt.Errorf("email tidak valid")
 	}
 	existsDoc, err := GetUserFromEmail(insertedDoc.Email, db, col)
 	if err != nil {
@@ -108,16 +122,13 @@ func LogIn(db *mongo.Database, col string, insertedDoc model.Pasien) (nama_pasie
 	}
 	salt, err := hex.DecodeString(existsDoc.Salt)
 	if err != nil {
-		return nama_pasien, fmt.Errorf("kesalahan server")
+		return userName, fmt.Errorf("kesalahan server")
 	}
 	hash := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
 	if hex.EncodeToString(hash) != existsDoc.Password {
-		// fmt.Println("insert :", hex.EncodeToString(hash))
-		// fmt.Println("exist :", existsDoc.Password)
-		// fmt.Println("salt :", salt)
-		return nama_pasien, fmt.Errorf("Password salah")
+		return userName, fmt.Errorf("password salah")
 	}
-	return existsDoc.Nama_Pasien, nil
+	return existsDoc.FirstName + " " + existsDoc.LastName, nil
 }
 
 // Insert Function
