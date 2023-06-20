@@ -63,20 +63,6 @@ func GetUserFromEmail(email string, db *mongo.Database, col string) (result mode
 	return result, nil
 }
 
-func GetAllDocs(db *mongo.Database, col string, docs interface{}) interface{} {
-	collection := db.Collection(col)
-	filter := bson.M{}
-	cursor, err := collection.Find(context.TODO(), filter)
-	if err != nil {
-		fmt.Println("Error GetAllDocs in colecction", col, ":", err)
-	}
-	err = cursor.All(context.TODO(), &docs)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return docs
-}
-
 func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID primitive.ObjectID, err error) {
 	if insertedDoc.FirstName == "" || insertedDoc.LastName == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
 		return insertedID, fmt.Errorf("Data tidak boleh kosong")
@@ -266,8 +252,35 @@ func GetDokterFromID(_id primitive.ObjectID, db *mongo.Database, col string) (da
 	return data, nil
 }
 
+func GetUserFromID(_id primitive.ObjectID, db *mongo.Database, col string) (data model.User, errs error) {
+	user := db.Collection(col)
+	filter := bson.M{"_id": _id}
+	err := user.FindOne(context.TODO(), filter).Decode(&data)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return data, fmt.Errorf("no data found for ID %s", _id)
+		}
+		return data, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
+	}
+	return data, nil
+}
+
 // Get All Function
 func GetAllPasien(db *mongo.Database, col string) (data []model.Pasien) {
+	pasien := db.Collection(col)
+	filter := bson.M{}
+	cursor, err := pasien.Find(context.TODO(), filter)
+	if err != nil {
+		fmt.Println("GetAllPasien :", err)
+	}
+	err = cursor.All(context.TODO(), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return
+}
+
+func GetAllUser(db *mongo.Database, col string) (data []model.User) {
 	pasien := db.Collection(col)
 	filter := bson.M{}
 	cursor, err := pasien.Find(context.TODO(), filter)
