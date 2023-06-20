@@ -9,6 +9,25 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func TestSignUp(t *testing.T) {
+	var doc model.Pasien
+	doc.Nama_Pasien = "Dimas Ardianto"
+	doc.Nomor_Ktp = "3217060601020007"
+	doc.Alamat = "Bandung Barat"
+	doc.Nomor_Telepon = "089647129890"
+	doc.Tanggal_Lahir = "6 Januari 2002"
+	doc.Jenis_Kelamin = "Laki-Laki"
+	doc.Email = "dimas123@gmail.com"
+	doc.Password = "qwertyuiop"
+	doc.Confirmpassword = "qwertyuiop"
+	insertedID, err := module.SignUp(module.MongoConn, "data_pasien", doc)
+	if err != nil {
+		t.Errorf("Error inserting document: %v", err)
+	} else {
+		fmt.Println("Data berhasil disimpan dengan id :", insertedID)
+	}
+}
+
 // Test Insert
 func TestInsertPasien(t *testing.T) {
 	nama_pasien := "Dimas Ardianto"

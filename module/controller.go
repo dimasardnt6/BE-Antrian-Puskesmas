@@ -38,15 +38,15 @@ func InsertOneDoc(db *mongo.Database, collection string, doc interface{}) (inser
 	return insertResult.InsertedID
 }
 
-func InsertOneDoc2(db *mongo.Database, col string, doc interface{}) (insertedID primitive.ObjectID, err error) {
-	result, err := db.Collection(col).InsertOne(context.Background(), doc)
-	if err != nil {
-		// fmt.Printf("InsertOneDoc: %v\n", err)
-		return insertedID, fmt.Errorf("kesalahan server")
-	}
-	insertedID = result.InsertedID.(primitive.ObjectID)
-	return insertedID, nil
-}
+// func InsertOneDoc2(db *mongo.Database, col string, doc interface{}) (insertedID primitive.ObjectID, err error) {
+// 	result, err := db.Collection(col).InsertOne(context.Background(), doc)
+// 	if err != nil {
+// 		// fmt.Printf("InsertOneDoc: %v\n", err)
+// 		return insertedID, fmt.Errorf("kesalahan server")
+// 	}
+// 	insertedID = result.InsertedID.(primitive.ObjectID)
+// 	return insertedID, nil
+// }
 
 // Login Function
 
@@ -63,7 +63,7 @@ func GetUserFromEmail(email string, db *mongo.Database, col string) (result mode
 	return result, nil
 }
 
-func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedID primitive.ObjectID, err error) {
+func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedID interface{}, err error) {
 	if insertedDoc.Nama_Pasien == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
 		return insertedID, fmt.Errorf("Data harus lengkap")
 	}
@@ -92,7 +92,7 @@ func SignUp(db *mongo.Database, col string, insertedDoc model.Pasien) (insertedI
 	insertedDoc.Password = hex.EncodeToString(hashedPassword)
 	insertedDoc.Salt = hex.EncodeToString(salt)
 	insertedDoc.Confirmpassword = ""
-	return InsertOneDoc2(db, col, insertedDoc)
+	return InsertOneDoc(db, col, insertedDoc), nil
 }
 
 func LogIn(db *mongo.Database, col string, insertedDoc model.Pasien) (nama_pasien string, err error) {
