@@ -96,7 +96,11 @@ func TestInsertPoliklinik(t *testing.T) {
 	kode_poliklinik := "PLUM"
 	nama_poliklinik := "Poliklinik Umum"
 	deskripsi := "memberikan pelayanan kedokteran berupa pemeriksaan kesehatan, pengobatan dan penyuluhan kepada pasien atau masyarakat"
-	insertedID, err := module.InsertPoliklinik(module.MongoConn, "data_poliklinik", kode_poliklinik, nama_poliklinik, deskripsi)
+	dokter := model.Dokter{
+		Nama_Dokter:  "Dr.Ariana",
+		Spesialisasi: "Dokter Spesialis Anak",
+	}
+	insertedID, err := module.InsertPoliklinik(module.MongoConn, "data_poliklinik", kode_poliklinik, nama_poliklinik, deskripsi, dokter)
 	if err != nil {
 		t.Errorf("Error inserting data: %v", err)
 	}
@@ -106,11 +110,7 @@ func TestInsertPoliklinik(t *testing.T) {
 func TestInsertDokter(t *testing.T) {
 	nama_dokter := "Dr.Stewards"
 	spesialisasi := "Dokter Sepesialis Gigi"
-	poli := model.Poliklinik{
-		Kode_Poliklinik: "PLGI",
-		Nama_Poliklinik: "Poliklinik Gigi",
-	}
-	insertedID, err := module.InsertDokter(module.MongoConn, "data_dokter", nama_dokter, spesialisasi, poli)
+	insertedID, err := module.InsertDokter(module.MongoConn, "data_dokter", nama_dokter, spesialisasi)
 	if err != nil {
 		t.Errorf("Error inserting data: %v", err)
 	}

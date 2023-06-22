@@ -154,11 +154,12 @@ func InsertAntrian(db *mongo.Database, col string, poli model.Poliklinik, identi
 	return insertedID, nil
 }
 
-func InsertPoliklinik(db *mongo.Database, col string, kode_poliklinik string, nama_poliklinik string, deskripsi string) (insertedID primitive.ObjectID, err error) {
+func InsertPoliklinik(db *mongo.Database, col string, kode_poliklinik string, nama_poliklinik string, deskripsi string, dokter model.Dokter) (insertedID primitive.ObjectID, err error) {
 	poliklinik := bson.M{
 		"kode_poliklinik": kode_poliklinik,
 		"nama_poliklinik": nama_poliklinik,
 		"deskripsi":       deskripsi,
+		"dokter":          dokter,
 	}
 	result, err := db.Collection(col).InsertOne(context.Background(), poliklinik)
 	if err != nil {
@@ -169,11 +170,10 @@ func InsertPoliklinik(db *mongo.Database, col string, kode_poliklinik string, na
 	return insertedID, nil
 }
 
-func InsertDokter(db *mongo.Database, col string, nama_dokter string, spesialisasi string, poli model.Poliklinik) (insertedID primitive.ObjectID, err error) {
+func InsertDokter(db *mongo.Database, col string, nama_dokter string, spesialisasi string) (insertedID primitive.ObjectID, err error) {
 	dokter := bson.M{
 		"nama_dokter":  nama_dokter,
 		"spesialisasi": spesialisasi,
-		"poli":         poli,
 	}
 	result, err := db.Collection(col).InsertOne(context.Background(), dokter)
 	if err != nil {
@@ -385,13 +385,13 @@ func UpdateAntrian(db *mongo.Database, col string, id primitive.ObjectID, poli m
 	return nil
 }
 
-func UpdatePoliklinik(db *mongo.Database, col string, id primitive.ObjectID, kode_poliklinik string, nama_poliklinik string, deskripsi string) (err error) {
+func UpdatePoliklinik(db *mongo.Database, col string, id primitive.ObjectID, kode_poliklinik string, nama_poliklinik string, deskripsi string, dokter model.Dokter) (err error) {
 	filter := bson.M{"_id": id}
 	update := bson.M{
 		"$set": bson.M{
 			"kode_poliklinik": kode_poliklinik,
 			"nama_poliklinik": nama_poliklinik,
-			"deskripsi":       deskripsi,
+			"dokter":          dokter,
 		},
 	}
 	result, err := db.Collection(col).UpdateOne(context.Background(), filter, update)
@@ -406,13 +406,12 @@ func UpdatePoliklinik(db *mongo.Database, col string, id primitive.ObjectID, kod
 	return nil
 }
 
-func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_dokter string, spesialisasi string, poli model.Poliklinik) (err error) {
+func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_dokter string, spesialisasi string) (err error) {
 	filter := bson.M{"_id": id}
 	update := bson.M{
 		"$set": bson.M{
 			"nama_dokter":  nama_dokter,
 			"spesialisasi": spesialisasi,
-			"poli":         poli,
 		},
 	}
 	result, err := db.Collection(col).UpdateOne(context.Background(), filter, update)
