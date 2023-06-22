@@ -391,6 +391,7 @@ func UpdatePoliklinik(db *mongo.Database, col string, id primitive.ObjectID, kod
 		"$set": bson.M{
 			"kode_poliklinik": kode_poliklinik,
 			"nama_poliklinik": nama_poliklinik,
+			"deskripsi":       deskripsi,
 			"dokter":          dokter,
 		},
 	}
