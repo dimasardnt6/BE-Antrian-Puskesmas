@@ -109,60 +109,6 @@ func LogIn(db *mongo.Database, col string, insertedDoc model.User) (userName str
 	return existsDoc.Fullname, nil
 }
 
-// func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID primitive.ObjectID, err error) {
-// 	if insertedDoc.FirstName == "" || insertedDoc.LastName == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
-// 		return insertedID, fmt.Errorf("Data tidak boleh kosong")
-// 	}
-// 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
-// 		return insertedID, fmt.Errorf("email tidak valid")
-// 	}
-// 	userExists, _ := GetUserFromEmail(insertedDoc.Email, db, col)
-// 	if insertedDoc.Email == userExists.Email {
-// 		return insertedID, fmt.Errorf("email sudah terdaftar")
-// 	}
-// 	if insertedDoc.Confirmpassword != insertedDoc.Password {
-// 		return insertedID, fmt.Errorf("konfirmasi password salah")
-// 	}
-// 	if strings.Contains(insertedDoc.Password, " ") {
-// 		return insertedID, fmt.Errorf("password tidak boleh mengandung spasi")
-// 	}
-// 	if len(insertedDoc.Password) < 8 {
-// 		return insertedID, fmt.Errorf("password terlalu pendek")
-// 	}
-// 	salt := make([]byte, 16)
-// 	_, err = rand.Read(salt)
-// 	if err != nil {
-// 		return insertedID, fmt.Errorf("kesalahan server")
-// 	}
-// 	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
-// 	insertedDoc.Password = hex.EncodeToString(hashedPassword)
-// 	insertedDoc.Salt = hex.EncodeToString(salt)
-// 	insertedDoc.Confirmpassword = ""
-// 	return InsertUser(db, col, insertedDoc)
-// }
-
-// func LogIn(db *mongo.Database, col string, insertedDoc model.User) (userName string, err error) {
-// 	if insertedDoc.Email == "" || insertedDoc.Password == "" {
-// 		return userName, fmt.Errorf("mohon untuk melengkapi data")
-// 	}
-// 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
-// 		return userName, fmt.Errorf("email tidak valid")
-// 	}
-// 	existsDoc, err := GetUserFromEmail(insertedDoc.Email, db, col)
-// 	if err != nil {
-// 		return
-// 	}
-// 	salt, err := hex.DecodeString(existsDoc.Salt)
-// 	if err != nil {
-// 		return userName, fmt.Errorf("kesalahan server")
-// 	}
-// 	hash := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
-// 	if hex.EncodeToString(hash) != existsDoc.Password {
-// 		return userName, fmt.Errorf("password salah")
-// 	}
-// 	return existsDoc.FirstName + " " + existsDoc.LastName, nil
-// }
-
 // Insert Function
 func InsertPasien(db *mongo.Database, col string, nama_pasien string, nomor_ktp string, alamat string, nomor_telepon string, tanggal_lahir string, jenis_kelamin string) (insertedID primitive.ObjectID, err error) {
 	pasien := bson.M{
