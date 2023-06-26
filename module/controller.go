@@ -2,7 +2,6 @@ package module
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -64,11 +63,14 @@ func GetUserFromEmail(email string, db *mongo.Database, col string) (result mode
 }
 
 func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID primitive.ObjectID, err error) {
-	if insertedDoc.FirstName == "" || insertedDoc.LastName == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
+	if insertedDoc.Fullname == "" || insertedDoc.Email == "" || insertedDoc.Password == "" || insertedDoc.Confirmpassword == "" {
 		return insertedID, fmt.Errorf("Data tidak boleh kosong")
 	}
 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
 		return insertedID, fmt.Errorf("email tidak valid")
+	}
+	if !strings.Contains(insertedDoc.Email, "@gmail.com") {
+		return insertedID, fmt.Errorf("email harus menggunakan domain @gmail.com")
 	}
 	userExists, _ := GetUserFromEmail(insertedDoc.Email, db, col)
 	if insertedDoc.Email == userExists.Email {
@@ -83,14 +85,8 @@ func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID 
 	if len(insertedDoc.Password) < 8 {
 		return insertedID, fmt.Errorf("password terlalu pendek")
 	}
-	salt := make([]byte, 16)
-	_, err = rand.Read(salt)
-	if err != nil {
-		return insertedID, fmt.Errorf("kesalahan server")
-	}
-	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), nil, 1, 64*1024, 4, 32)
 	insertedDoc.Password = hex.EncodeToString(hashedPassword)
-	insertedDoc.Salt = hex.EncodeToString(salt)
 	insertedDoc.Confirmpassword = ""
 	return InsertUser(db, col, insertedDoc)
 }
@@ -106,16 +102,66 @@ func LogIn(db *mongo.Database, col string, insertedDoc model.User) (userName str
 	if err != nil {
 		return
 	}
-	salt, err := hex.DecodeString(existsDoc.Salt)
-	if err != nil {
-		return userName, fmt.Errorf("kesalahan server")
-	}
-	hash := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+	hash := argon2.IDKey([]byte(insertedDoc.Password), nil, 1, 64*1024, 4, 32)
 	if hex.EncodeToString(hash) != existsDoc.Password {
 		return userName, fmt.Errorf("password salah")
 	}
-	return existsDoc.FirstName + " " + existsDoc.LastName, nil
+	return existsDoc.Fullname, nil
 }
+
+// func SignUp(db *mongo.Database, col string, insertedDoc model.User) (insertedID primitive.ObjectID, err error) {
+// 	if insertedDoc.FirstName == "" || insertedDoc.LastName == "" || insertedDoc.Email == "" || insertedDoc.Password == "" {
+// 		return insertedID, fmt.Errorf("Data tidak boleh kosong")
+// 	}
+// 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
+// 		return insertedID, fmt.Errorf("email tidak valid")
+// 	}
+// 	userExists, _ := GetUserFromEmail(insertedDoc.Email, db, col)
+// 	if insertedDoc.Email == userExists.Email {
+// 		return insertedID, fmt.Errorf("email sudah terdaftar")
+// 	}
+// 	if insertedDoc.Confirmpassword != insertedDoc.Password {
+// 		return insertedID, fmt.Errorf("konfirmasi password salah")
+// 	}
+// 	if strings.Contains(insertedDoc.Password, " ") {
+// 		return insertedID, fmt.Errorf("password tidak boleh mengandung spasi")
+// 	}
+// 	if len(insertedDoc.Password) < 8 {
+// 		return insertedID, fmt.Errorf("password terlalu pendek")
+// 	}
+// 	salt := make([]byte, 16)
+// 	_, err = rand.Read(salt)
+// 	if err != nil {
+// 		return insertedID, fmt.Errorf("kesalahan server")
+// 	}
+// 	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+// 	insertedDoc.Password = hex.EncodeToString(hashedPassword)
+// 	insertedDoc.Salt = hex.EncodeToString(salt)
+// 	insertedDoc.Confirmpassword = ""
+// 	return InsertUser(db, col, insertedDoc)
+// }
+
+// func LogIn(db *mongo.Database, col string, insertedDoc model.User) (userName string, err error) {
+// 	if insertedDoc.Email == "" || insertedDoc.Password == "" {
+// 		return userName, fmt.Errorf("mohon untuk melengkapi data")
+// 	}
+// 	if err = checkmail.ValidateFormat(insertedDoc.Email); err != nil {
+// 		return userName, fmt.Errorf("email tidak valid")
+// 	}
+// 	existsDoc, err := GetUserFromEmail(insertedDoc.Email, db, col)
+// 	if err != nil {
+// 		return
+// 	}
+// 	salt, err := hex.DecodeString(existsDoc.Salt)
+// 	if err != nil {
+// 		return userName, fmt.Errorf("kesalahan server")
+// 	}
+// 	hash := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
+// 	if hex.EncodeToString(hash) != existsDoc.Password {
+// 		return userName, fmt.Errorf("password salah")
+// 	}
+// 	return existsDoc.FirstName + " " + existsDoc.LastName, nil
+// }
 
 // Insert Function
 func InsertPasien(db *mongo.Database, col string, nama_pasien string, nomor_ktp string, alamat string, nomor_telepon string, tanggal_lahir string, jenis_kelamin string) (insertedID primitive.ObjectID, err error) {
@@ -427,6 +473,20 @@ func UpdateDokter(db *mongo.Database, col string, id primitive.ObjectID, nama_do
 	return nil
 }
 
+func UpdateUser(db *mongo.Database, col string, id primitive.ObjectID, doc interface{}) (err error) {
+	filter := bson.M{"_id": id}
+	result, err := db.Collection(col).UpdateOne(context.Background(), filter, bson.M{"$set": doc})
+	if err != nil {
+		fmt.Printf("UpdateUser: %v\n", err)
+		return
+	}
+	if result.ModifiedCount == 0 {
+		err = errors.New("No data has been changed with the specified ID")
+		return
+	}
+	return nil
+}
+
 // Delete Function
 
 func DeletePasienByID(_id primitive.ObjectID, db *mongo.Database, col string) error {
@@ -482,6 +542,22 @@ func DeleteDokterByID(_id primitive.ObjectID, db *mongo.Database, col string) er
 	filter := bson.M{"_id": _id}
 
 	result, err := dokter.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return fmt.Errorf("error deleting data for ID %s: %s", _id, err.Error())
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("data with ID %s not found", _id)
+	}
+
+	return nil
+}
+
+func DeleteUserByID(_id primitive.ObjectID, db *mongo.Database, col string) error {
+	user := db.Collection(col)
+	filter := bson.M{"_id": _id}
+
+	result, err := user.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return fmt.Errorf("error deleting data for ID %s: %s", _id, err.Error())
 	}

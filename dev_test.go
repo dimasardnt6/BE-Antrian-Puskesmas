@@ -11,11 +11,10 @@ import (
 
 func TestInsertUser(t *testing.T) {
 	var doc model.User
-	doc.FirstName = "Dimas"
-	doc.LastName = "Ardianto"
-	doc.Email = "dimas@gmail.com"
+	doc.Fullname = "Anto"
+	doc.Email = "anto@gmail.com"
 	doc.Password = "qwertyuiop"
-	if doc.FirstName == "" || doc.LastName == "" || doc.Email == "" || doc.Password == "" {
+	if doc.Fullname == "" || doc.Email == "" || doc.Password == "" {
 		t.Errorf("Data tidak boleh kosong")
 	} else {
 		insertedID, err := module.InsertUser(module.MongoConn, "data_user", doc)
@@ -30,9 +29,8 @@ func TestInsertUser(t *testing.T) {
 
 func TestSignUp(t *testing.T) {
 	var doc model.User
-	doc.FirstName = "Dimas"
-	doc.LastName = "Ardianto"
-	doc.Email = "dimas@gmail.com"
+	doc.Fullname = "Anto"
+	doc.Email = "anto@gmail.com"
 	doc.Password = "qwertyuiop"
 	doc.Confirmpassword = "qwertyuiop"
 	insertedID, err := module.SignUp(module.MongoConn, "data_user", doc)
@@ -45,13 +43,33 @@ func TestSignUp(t *testing.T) {
 
 func TestLogIn(t *testing.T) {
 	var doc model.User
-	doc.Email = "dimas@gmail.com"
+	doc.Email = "anto@gmail.com"
 	doc.Password = "qwertyuiop"
 	user, err := module.LogIn(module.MongoConn, "data_user", doc)
 	if err != nil {
 		t.Errorf("Error getting document: %v", err)
 	} else {
 		fmt.Println("Welcome :", user)
+	}
+}
+
+func TestUpdateUser(t *testing.T) {
+	var docs model.User
+	id := "6499a1074a1d09b103c052fa"
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	docs.Fullname = "Anto"
+	docs.Email = "anto@gmail.com"
+	docs.Password = "qwertyuiop"
+	if docs.Fullname == "" || docs.Email == "" || docs.Password == "" {
+		t.Errorf("mohon untuk melengkapi data")
+	} else {
+		err := module.UpdateUser(module.MongoConn, "data_user", objectId, docs)
+		if err != nil {
+			t.Errorf("Error inserting document: %v", err)
+			fmt.Println("Data tidak berhasil diupdate")
+		} else {
+			fmt.Println("Data berhasil diupdate")
+		}
 	}
 }
 
