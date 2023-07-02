@@ -12,6 +12,10 @@ type User struct {
 	Confirmpassword string             `bson:"confirmpass,omitempty" json:"confirmpass,omitempty"`
 }
 
+type Token struct {
+	Token_String string `bson:"tokenstring,omitempty" json:"tokenstring,omitempty"`
+}
+
 type Pasien struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 	Nama_Pasien   string             `bson:"nama_pasien,omitempty" json:"nama_pasien,omitempty"`
